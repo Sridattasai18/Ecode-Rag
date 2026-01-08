@@ -1,0 +1,11 @@
+flask
+flask-cors
+langchain
+langchain-text-splitters
+langchain-google-genai
+faiss-cpu
+google-generativeai
+gitpython
+python-dotenv
+requests
+numpy
