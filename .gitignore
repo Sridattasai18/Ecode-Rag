@@ -14,7 +14,7 @@ repos/
 
 # Logs
 *.log
-ecode.log
+repologic.log
 
 # IDE
 .vscode/

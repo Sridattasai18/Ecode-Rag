@@ -4,85 +4,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ecode - GitHub Repository Explainer</title>
-    <meta name="description" content="Understand any public GitHub repository using grounded AI explanations.">
-    <link rel="stylesheet" href="index.css">
-    <!-- Highlight.js Theme -->
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <title>RepoLogic | Repository Analyzer</title>
+    <meta name="description" content="Select code, understand instantly. AI-powered repository exploration.">
+
+    <!-- Typography: Manrope (Spotify-like) + JetBrains Mono for code -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Syntax Highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+
+    <link rel="stylesheet" href="index.css">
 </head>
 
 <body>
-    <div class="app-container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <h1 class="logo">Ecode</h1>
-                <p class="tagline">Repo Explainer</p>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-brand">
+                <span class="brand-icon">◈</span>
+                <span class="brand-name">RepoLogic</span>
             </div>
 
-            <nav class="sidebar-nav">
-                <div class="nav-section">
-                    <h3 class="nav-title">Your Library</h3>
-                    <div id="repo-list" class="repo-list">
-                        <!-- History items to be added here -->
-                        <div class="repo-item active">
-                            <span class="repo-icon">📂</span>
-                            <span class="repo-name">Current Repository</span>
-                        </div>
-                    </div>
-                </div>
-            </nav>
-
-            <div class="sidebar-footer">
-                <button id="new-chat-btn" class="btn btn-secondary full-width">
-                    + New Repository
+            <div class="header-input">
+                <input type="url" id="repo-url-input" class="url-input" placeholder="Paste GitHub repository URL..."
+                    spellcheck="false">
+                <button id="analyze-btn" class="btn-analyze">
+                    <span class="btn-text">Analyze</span>
+                    <span class="btn-icon">→</span>
                 </button>
             </div>
-        </aside>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Top Bar -->
-            <header class="top-bar">
-                <div class="input-group">
-                    <input type="url" id="repo-url" class="input" placeholder="https://github.com/owner/repo"
-                        autocomplete="off">
-                    <button id="load-repo-btn" class="btn btn-primary">Load</button>
+            <div class="header-status">
+                <span id="status-indicator" class="status-dot"></span>
+                <span id="status-text" class="status-text">Ready</span>
+            </div>
+        </header>
+
+        <!-- Main Layout -->
+        <main class="main-layout">
+            <!-- Left Panel: File Tree -->
+            <aside class="panel panel-files" id="files-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Files</h2>
+                    <span id="file-count" class="panel-badge">0</span>
                 </div>
-                <!-- Status & Error Container -->
-                <div class="status-area">
-                    <p id="repo-status" class="status-message hidden"></p>
-                    <div id="error-container" class="error-container hidden">
-                        <p id="error-message" class="error-message"></p>
+
+                <div class="panel-search">
+                    <input type="text" id="file-search" class="search-input" placeholder="Filter files...">
+                </div>
+
+                <div id="file-tree" class="file-tree">
+                    <div class="empty-state" id="files-empty">
+                        <p>Enter a repository URL above to explore its files.</p>
                     </div>
                 </div>
-            </header>
+            </aside>
 
-            <!-- Chat Area -->
-            <section id="chat-container" class="chat-container">
-                <div class="message ai-message welcome-message">
-                    👋 <strong>Repository loaded!</strong><br>Ask me anything about the code, structure, or features.
+            <!-- Center Panel: Code Viewer -->
+            <section class="panel panel-code" id="code-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title" id="current-file">No file selected</h2>
+                    <div class="panel-actions">
+                        <button id="explain-btn" class="btn-explain" disabled>
+                            Explain Selection
+                        </button>
+                    </div>
+                </div>
+
+                <div id="code-viewer" class="code-viewer">
+                    <div class="empty-state" id="code-empty">
+                        <div class="empty-icon">📄</div>
+                        <p>Select a file from the tree to view its code.</p>
+                        <p class="empty-hint">Then highlight code and click "Explain Selection"</p>
+                    </div>
+
+                    <!-- Code content will be inserted here -->
+                    <div id="code-content" class="code-content hidden">
+                        <div class="line-numbers" id="line-numbers"></div>
+                        <pre><code id="code-text" class="code-text"></code></pre>
+                    </div>
+                </div>
+
+                <div class="selection-info hidden" id="selection-info">
+                    <span class="selection-label">Selected:</span>
+                    <span id="selection-range" class="selection-range">Lines 0-0</span>
                 </div>
             </section>
 
-            <!-- Bottom Input Bar -->
-            <section class="section question-section" id="question-section">
-                <div class="input-wrapper">
-                    <textarea id="question-input" class="textarea" placeholder="Ask a question about this repository..."
-                        rows="1" disabled></textarea>
-                    <button id="ask-btn" class="btn btn-primary btn-icon" disabled>
-                        ➤
-                    </button>
+            <!-- Right Panel: Explanation -->
+            <aside class="panel panel-explanation" id="explanation-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Explanation</h2>
                 </div>
-                <footer class="footer-text">
-                    <p>Ecode • Built for learning • © 2026 Kaligotla Sri Datta Sai Vithal</p>
-                </footer>
-            </section>
+
+                <div id="explanation-content" class="explanation-content">
+                    <div class="empty-state" id="explanation-empty">
+                        <div class="empty-icon">💡</div>
+                        <p>Select code to get an AI-powered explanation.</p>
+                        <div class="instruction-steps">
+                            <div class="step">
+                                <span class="step-num">1</span>
+                                <span class="step-text">Choose a file</span>
+                            </div>
+                            <div class="step">
+                                <span class="step-num">2</span>
+                                <span class="step-text">Highlight code lines</span>
+                            </div>
+                            <div class="step">
+                                <span class="step-num">3</span>
+                                <span class="step-text">Click "Explain Selection"</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Explanation will be inserted here -->
+                    <div id="explanation-result" class="explanation-result hidden"></div>
+                </div>
+
+                <div class="explanation-loading hidden" id="explanation-loading">
+                    <div class="loading-spinner"></div>
+                    <p>Analyzing code...</p>
+                </div>
+            </aside>
         </main>
+
+        <!-- Error Toast -->
+        <div id="error-toast" class="toast toast-error hidden">
+            <span id="error-message"></span>
+            <button class="toast-close" onclick="hideError()">×</button>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
